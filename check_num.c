@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   check_num.c                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: seujeong <seujeong@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2021/03/15 15:21:10 by seujeong          #+#    #+#             */
+/*   Updated: 2021/03/16 21:27:51 by seujeong         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "ft_printf.h"
 
 int		set_pointer(char **buf)
@@ -6,69 +18,78 @@ int		set_pointer(char **buf)
 	return (ft_strlen(*buf));
 }
 
-int		check_minus(f_info *info)
+int		check_minus(t_info *info, char **buf)
 {
 	int		minus_size;
+	char	*temp;
 
 	minus_size = 0;
-	if ((info->type == 'i' || info->type == 'd') && info->num_minus == -1)
+	if ((info->type == 'i' || info->type == 'd') &&
+					info->zero == 0 && info->num_minus == -1)
 	{
-		write(1, "=", 1);
+		temp = ft_strjoin("-", *buf);
+		free(*buf);
+		*buf = temp;
 		minus_size = 1;
 	}
 	return (minus_size);
 }
 
-int		check_minus_zero(int length, f_info *info, char **buf)
+int		check_minus_zero(int length, t_info *info, char **buf)
 {
 	int		minus_size;
+	char	*temp;
 
 	minus_size = 0;
 	if (info->num_minus == -1 && info->zero == 1)
 	{
 		if (length >= info->width)
 		{
-			*buf = ft_strjoin("-", *buf, 2);
+			temp = ft_strjoin("-", *buf);
+			free(*buf);
+			*buf = temp;
 			minus_size = 1;
 		}
-		else if (minus_size < info->width)
+		else if (length < info->width)
 			*buf[0] = '-';
 	}
 	return (minus_size);
 }
 
-int		make_buf(unsigned long long my_list, f_info *info, char **buf)
+int		make_buf_num(unsigned long long my_list, t_info *info, char **buf)
 {
-	int		index;
+	int		i;
+	int		num_len;
 	int		result;
-	int		num_length;
 
-	index = 0;
-	num_length = check_numlen(my_list, info);
-	result = info->precision > num_length ? info->precision : num_length;
-	if (!(*buf = (char *)malloc(sizeof(char) * result + 1)))
+	i = 0;
+	result = check_numlen(my_list, info);
+	num_len = (info->prec > result) ? info->prec : result;
+	if (!(*buf = (char *)malloc(sizeof(char) * num_len + 1)))
 		return (0);
-	(*buf)[result] = '\0';
-	while (num_length + index < result)
+	(*buf)[num_len] = '\0';
+	while (result + i < num_len)
 	{
-		(*buf)[index] = '0';
-		index++;
+		(*buf)[i] = '0';
+		i++;
 	}
-	index = 1;
-	if (my_list == 0 && info->precision != 0)
-		(*buf)[result - index] = '0';
+	i = 1;
+	if (my_list == 0 && info->prec != 0)
+		(*buf)[num_len - i] = '0';
 	while (my_list)
 	{
-		(*buf)[result - index] = deci_set(info->type)[my_list % info->num_deci];
+		(*buf)[num_len - i] = set_deci(info->type)[my_list % info->num_deci];
 		my_list /= info->num_deci;
-		index++;
+		i++;
 	}
-	return (num_length);
+	return (result);
 }
 
-int		print_num(unsigned long long my_list, f_info *info)
+int		print_num(unsigned long long my_list, t_info *info)
 {
+	char	*buf;
 	int		result;
+	int		buf_temp;
 
 	if (info->type == 'x' || info->type == 'X' || info->type == 'p')
 		info->num_deci = 16;
@@ -77,4 +98,15 @@ int		print_num(unsigned long long my_list, f_info *info)
 		info->num_minus = -1;
 		my_list = -my_list;
 	}
+	buf_temp = make_buf_num(my_list, info, &buf);
+	buf_temp += check_minus(info, &buf);
+	if (info->type == 'p')
+	{
+		set_pointer(&buf);
+	}
+	result = set_width(&buf, info);
+	result += check_minus_zero(buf_temp, info, &buf);
+	ft_putstr_fd(buf, 1);
+	free(buf);
+	return (result);
 }

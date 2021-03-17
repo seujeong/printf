@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   check_char_string.c                                :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: seujeong <seujeong@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2021/03/15 15:21:16 by seujeong          #+#    #+#             */
+/*   Updated: 2021/03/16 21:32:04 by seujeong         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "ft_printf.h"
 
 int		print_width(int width, int length, int zero)
@@ -16,12 +28,15 @@ int		print_width(int width, int length, int zero)
 	return (result);
 }
 
-int		print_char(int my_list, f_info *info)
+int		print_char(int my_list, t_info *info)
 {
 	int		result;
 	int		length;
 
 	length = 1;
+	result = 0;
+	if (info->type == '%' && info->minus == 1)
+		info->zero = 0;
 	if (info->minus == 1)
 		result += ft_putchar(my_list);
 	result += print_width(info->width, length, info->zero);
@@ -30,7 +45,7 @@ int		print_char(int my_list, f_info *info)
 	return (result);
 }
 
-int		print_string(char *my_list, f_info *info)
+int		print_string(char *my_list, t_info *info)
 {
 	int		result;
 	int		index;
@@ -39,16 +54,20 @@ int		print_string(char *my_list, f_info *info)
 	index = 0;
 	if (my_list == NULL)
 		my_list = "(null)";
-	if (info->precision == -1 || (size_t)info->precision > ft_strlen(my_list))
-		info->precision = ft_strlen(my_list);
+	if (info->prec == -1 || (size_t)info->prec > ft_strlen(my_list))
+		info->prec = ft_strlen(my_list);
 	if (info->minus == 1)
-		while (info->precision-- > 0)
+	{
+		while (info->prec-- > 0)
 		{
 			result += ft_putchar(my_list[index++]);
 			info->width--;
 		}
-	result += print_width(info->width, info->precision, info->zero);
+		info->prec += 1;
+	}
+	result += print_width(info->width, info->prec, info->zero);
 	if (info->minus == 0)
-		while (info->precision-- > 0)
+		while (info->prec-- > 0)
 			result += ft_putchar(my_list[index++]);
+	return (result);
 }
